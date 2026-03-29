@@ -1,15 +1,15 @@
 # 🛰️ Overhead (Satellite/Drone) Image Analysis
 
-![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=flat&logo=python&logoColor=white)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?style=flat&logo=pytorch&logoColor=white)
-![OpenCV](https://img.shields.io/badge/OpenCV-4.13-5C3EE8?style=flat&logo=opencv&logoColor=white)
-![SAM](https://img.shields.io/badge/SAM-ViT--B-FF6B35?style=flat)
-![YOLO](https://img.shields.io/badge/YOLOv8-Nano-00FFAA?style=flat&logo=ultralytics&logoColor=black)
-![Platform](https://img.shields.io/badge/Platform-Kaggle-20BEFF?style=flat&logo=kaggle&logoColor=white)
-![GPU](https://img.shields.io/badge/GPU-2×%20T4-76B900?style=flat&logo=nvidia&logoColor=white)
-![U-Net IoU](https://img.shields.io/badge/U--Net%20IoU-0.631-brightgreen?style=flat)
-![Phase 2 Accuracy](https://img.shields.io/badge/Phase%202%20Accuracy-~92%25-brightgreen?style=flat)
-![Dataset](https://img.shields.io/badge/Dataset-SpaceNet--1%20%7C%20Svamitva-orange?style=flat)
+<img src="https://img.shields.io/badge/PYTHON-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white" height="28"/>
+<img src="https://img.shields.io/badge/PYTORCH-2.x-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white" height="28"/>
+<img src="https://img.shields.io/badge/OPENCV-4.13-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white" height="28"/>
+<img src="https://img.shields.io/badge/SAM-ViT--B-FF6B35?style=for-the-badge" height="28"/>
+<img src="https://img.shields.io/badge/YOLOv8-Nano-00C853?style=for-the-badge" height="28"/>
+<img src="https://img.shields.io/badge/PLATFORM-Kaggle-20BEFF?style=for-the-badge&logo=kaggle&logoColor=white" height="28"/>
+<img src="https://img.shields.io/badge/GPU-2×%20T4-76B900?style=for-the-badge&logo=nvidia&logoColor=white" height="28"/>
+<img src="https://img.shields.io/badge/U--NET%20IoU-0.631-brightgreen?style=for-the-badge" height="28"/>
+<img src="https://img.shields.io/badge/PHASE%202%20ACCURACY-~92%25-brightgreen?style=for-the-badge" height="28"/>
+<img src="https://img.shields.io/badge/DATASET-SpaceNet--1%20%7C%20Svamitva-FF8C00?style=for-the-badge" height="28"/>
 
 > End-to-end deep learning pipeline for **building footprint extraction** from satellite and drone imagery — spanning 8-band multispectral training (SpaceNet-1), 3-band RGB evaluation, and full cross-domain transfer learning to Indian drone imagery (Svamitva). Three architectures compared: custom U-Net, fine-tuned SAM ViT-B, and YOLOv8-Nano.
 
