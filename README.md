@@ -247,7 +247,7 @@ Evaluated on the SpaceNet-1 validation set using 3-band RGB imagery with pre-gen
 
 #### Sample RGB Tile & Mask
 <p align="center">
-  <img src="eval_sample_tile.png" width="80%"/>
+  <img src="assets/eval_sample_tile.png" width="80%"/>
 </p>
 
 #### Model Metrics
