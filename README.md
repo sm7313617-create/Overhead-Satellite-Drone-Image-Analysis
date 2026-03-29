@@ -1,227 +1,226 @@
-# Overhead (Satellite/Drone) Image Analysis
+# 🛰️ SpaceNet1 Building Detection — U-Net + SAM (3-Band Evaluation)
 
-A deep learning pipeline for **building footprint extraction** from satellite and drone imagery, covering the full lifecycle from data ingestion through model training, evaluation, and cross-domain transfer learning.
+![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=flat&logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?style=flat&logo=pytorch&logoColor=white)
+![OpenCV](https://img.shields.io/badge/OpenCV-4.13-5C3EE8?style=flat&logo=opencv&logoColor=white)
+![SAM](https://img.shields.io/badge/SAM-ViT--B-FF6B35?style=flat)
+![Platform](https://img.shields.io/badge/Platform-Kaggle-20BEFF?style=flat&logo=kaggle&logoColor=white)
+![GPU](https://img.shields.io/badge/GPU-2×%20T4-76B900?style=flat&logo=nvidia&logoColor=white)
+![IoU](https://img.shields.io/badge/U--Net%20IoU-0.631-brightgreen?style=flat)
+![Dataset](https://img.shields.io/badge/Dataset-SpaceNet--1-orange?style=flat)
 
----
+> A focused evaluation notebook comparing a trained **3-band U-Net** against **SAM zero-shot inference** for building footprint segmentation on the SpaceNet-1 dataset — running entirely on Kaggle with no Google Drive dependency.
 
-## Project Overview
-
-This project implements and compares multiple deep learning architectures for semantic segmentation of building footprints across two distinct image domains:
-
-- **Phase 1 — Satellite Imagery:** Training on the SpaceNet-1 dataset (WorldView-3 multispectral imagery over Rio de Janeiro)
-- **Phase 2 — Transfer Learning:** Adapting trained models to Indian drone imagery via the Svamitva dataset
-
----
-
-## Repository Structure
-
-```
-overhead-satellite-image-analysis/
-├── data/
-│   └── dataset_links.md          # Links and storage info for all datasets
-├── notebooks/
-│   ├── oiu-sd.ipynb               # Main pipeline: 8-band U-Net + SAM fine-tuning + YOLO (Phases 1 & 2)
-│   ├── spacenet1-unet-sam-3band-evaluation.ipynb  # 3-band U-Net training & U-Net vs SAM evaluation
-│   └── spacenet1_full_download.ipynb              # Dataset download utility
-├── .gitignore
-├── README.md
-└── requirements.txt
-```
+🌐 [Live Demo](#) · 📓 [Notebook](notebooks/spacenet1-unet-sam-3band-evaluation.ipynb) · 🗃️ [Dataset](https://spacenet.ai/spacenet-buildings-dataset-v1/)
 
 ---
 
-## Datasets
+## 📋 Table of Contents
 
-### SpaceNet-1
-- **Source:** [SpaceNet Buildings Dataset v1](https://spacenet.ai/spacenet-buildings-dataset-v1/)
-- **AWS:** `s3://spacenet-dataset/spacenet/SN1_buildings/tarballs/`
-- **Content:** ~6,940 WorldView-3 GeoTIFF tiles over Rio de Janeiro
-  - 3-band RGB imagery
-  - 8-band multispectral imagery (coastal, blue, green, yellow, red, red-edge, NIR1, NIR2)
-  - GeoJSON building footprint annotations
-- **Storage:** Hosted externally on Google Drive / Kaggle
+- [Overview](#overview)
+- [Dataset](#dataset)
+- [Model Architectures](#model-architectures)
+- [Pipeline](#pipeline)
+- [Results](#results)
+- [Environment & Setup](#environment--setup)
+- [Notebook Walkthrough](#notebook-walkthrough)
+- [Output Files](#output-files)
 
-### Svamitva (Phase 2)
-- **Content:** Filtered RGB drone aerial imagery with binary building masks
-- **Domain:** Indian rural/peri-urban settlements
-- **Purpose:** Cross-domain transfer learning target
+---
+
+## Overview
+
+This notebook trains a custom **3-band U-Net** from scratch on SpaceNet-1 RGB imagery and benchmarks it against **SAM ViT-B zero-shot segmentation**. The entire pipeline runs on Kaggle using a pre-generated mask dataset — no Google Drive mounting required.
+
+Key features:
+- 3-band (RGB) U-Net with `DoubleConv` blocks and skip connections
+- `BCEDiceLoss` with class-imbalance weighting
+- DataParallel training across 2× T4 GPUs
+- SAM zero-shot inference with custom building-area and aspect-ratio filters
+- Side-by-side U-Net vs SAM metric comparison
+
+---
+
+## Dataset
+
+**SpaceNet-1 Buildings (3-band RGB + Pre-generated Masks)**
+
+| Property | Details |
+|---|---|
+| Region | Rio de Janeiro, Brazil |
+| Sensor | WorldView-3 |
+| Bands | 3-band RGB (this notebook) |
+| Tiles | ~6,940 GeoTIFF images |
+| Resolution | 438 × 406 px (native), resized to 512 × 512 |
+| Annotations | Binary building footprint masks (pre-generated) |
+| Platform | Kaggle dataset: `spacenet1-3band-masks` |
+
+> Dataset stored externally. See [`data/dataset_links.md`](../data/dataset_links.md) for download links.
 
 ---
 
 ## Model Architectures
 
-### 1. Custom U-Net (8-channel)
-A from-scratch encoder-decoder network with skip connections, adapted for 8-band multispectral input.
+### 🔷 U-Net (3-band)
 
-- **Input:** 8-channel WorldView-3 GeoTIFF tiles at 400×400 px
-- **Architecture:** 4-level encoder (`[64, 128, 256, 512]` feature maps), symmetric decoder with skip connections, `DoubleConv` blocks (Conv → BN → ReLU ×2)
-- **Loss:** `BCEDiceLoss` (weighted BCE + Dice)
-- **Optimizer:** Adam (lr=1e-4), DataParallel on 2× T4 GPUs
-- **Augmentation:** Horizontal/vertical flip, 90° rotation, brightness/contrast jitter
+A from-scratch encoder-decoder with skip connections, built for RGB satellite imagery.
 
-### 2. Custom U-Net (3-channel)
-Identical architecture adapted for 3-band RGB input; trained and evaluated on Kaggle with a pre-generated mask dataset.
+```
+Input: (B, 3, 512, 512)
+  │
+  ├─ Encoder: [64 → 128 → 256 → 512]  (DoubleConv + MaxPool)
+  ├─ Bottleneck: 1024
+  └─ Decoder: [512 → 256 → 128 → 64]  (ConvTranspose2d + skip concat)
+  │
+Output: (B, 1, 512, 512)  — logits
+```
 
-### 3. SAM ViT-B Fine-Tuner
-Meta's Segment Anything Model adapted for satellite imagery segmentation.
+| Component | Detail |
+|---|---|
+| Input channels | 3 (R, G, B) |
+| Feature maps | [64, 128, 256, 512] |
+| Loss | BCEDiceLoss (pos_weight=5.0) |
+| Optimizer | Adam (lr=1e-4) |
+| Augmentation | H/V flip, 90° rotation, brightness/contrast |
+| Multi-GPU | DataParallel (2× T4) |
+| Checkpoint | Auto-resume from `unet_last.pth` |
 
-- **Base model:** SAM ViT-B (`sam_vit_b_01ec64.pth`)
-- **Adaptation:** Frozen image encoder + prompt encoder; learnable `channel_adapter` (Conv2d 8→3) prepended; only the mask decoder is fine-tuned
-- **Trainable params:** ~4.1M (mask decoder only)
-- **Training:** Micro-batched forward passes to manage GPU memory; AMP with gradient clipping
+### 🔶 SAM ViT-B (Zero-Shot)
 
-### 4. YOLOv8-Nano (Segmentation)
-Applied in Phase 2 as a lightweight detector-segmenter baseline.
+Meta's Segment Anything Model applied out-of-the-box with a custom **building filter** post-processor.
 
-- **Dataset format:** YOLO normalized polygon format, converted from binary masks via OpenCV contour extraction
-- **Architecture:** YOLOv8-Nano segmentation head
-- **Purpose:** Comparison against U-Net and SAM on drone imagery
+| Component | Detail |
+|---|---|
+| Model | SAM ViT-B (`sam_vit_b_01ec64.pth`, ~375 MB) |
+| Mode | Zero-shot (no fine-tuning) |
+| Generator | `SamAutomaticMaskGenerator` (points_per_side=16) |
+| Building filter | Area: 200–50,000 px; Aspect ratio ≤ 4.0 |
+| Input | 3-band RGB uint8 |
 
 ---
 
-## Pipeline Summary
-
-### Phase 1 — SpaceNet-1 (Satellite)
+## Pipeline
 
 ```
-Raw GeoTIFF (8-band / 3-band)
+Kaggle Dataset (3-band RGB + pre-generated masks)
         │
-        ├─► Mask Generation (rasterize GeoJSON → binary TIF)
+        ├─► Path Discovery (dynamic glob across split folders)
         │
-        ├─► Dataset & DataLoader (Albumentations augmentation)
+        ├─► Dataset Exploration & Visualisation (Step 4)
         │
-        ├─► U-Net Training (BCEDiceLoss, Adam, DataParallel)
+        ├─► SpaceNetDataset + DataLoaders  (train/val/test split)
+        │        └─ Albumentations augmentation
         │
-        ├─► U-Net Evaluation (IoU, Precision, Recall, F1, Confusion Matrix)
+        ├─► U-Net Training  (Steps 8–10)
+        │        ├─ BCEDiceLoss
+        │        ├─ DataParallel (2× T4)
+        │        └─ Checkpoint-safe (auto-resume)
         │
-        └─► SAM Zero-Shot + Fine-Tuning → Comparative Evaluation
-```
-
-### Phase 2 — Svamitva Drone (Transfer Learning)
-
-```
-Pre-trained 8-band models (U-Net + SAM)
+        ├─► Full Evaluation  (Step 11)
+        │        ├─ Loss & IoU curves
+        │        ├─ Pixel-level: IoU / Precision / Recall / F1
+        │        ├─ Confusion matrix
+        │        ├─ Per-image IoU distribution
+        │        └─ Prediction grid + polygon overlay
         │
-        ├─► Network Surgery (replace 8→3 channel adapter)
-        │
-        ├─► Zero-Shot Transfer Test
-        │
-        ├─► Phase 2 Fine-Tuning (drone dataset, lr=1e-4, 10 epochs)
-        │
-        ├─► U-Net + OpenCV Polygon Post-processing
-        │
-        └─► YOLOv8-Nano Training & Evaluation
+        └─► SAM Inference & Comparison  (Step 12)
+                 ├─ SAM zero-shot on 100 val images
+                 ├─ Per-image IoU distribution (SAM)
+                 ├─ Confusion matrix (SAM)
+                 └─ U-Net vs SAM bar chart
 ```
 
 ---
 
 ## Results
 
-### Phase 1 — SpaceNet-1 Test Set
+### U-Net (3-band) — SpaceNet-1 Validation Set
+
+| Metric | Score |
+|---|---|
+| **Mean IoU** | **0.631** |
+| **F1 Score** | **0.724** |
+| Precision | 0.601 |
+| Recall | 0.910 |
+
+### U-Net vs SAM — Comparison
 
 | Model | Mean IoU | Precision | Recall | F1 Score |
 |---|---|---|---|---|
-| U-Net (3-band, trained) | 0.631 | 0.601 | 0.910 | 0.724 |
+| **U-Net (trained)** | **0.631** | **0.601** | **0.910** | **0.724** |
 | SAM ViT-B (zero-shot) | ~0.10 | — | — | — |
-| SAM ViT-B (fine-tuned) | — | — | — | — |
 
-### Phase 2 — Svamitva Drone Dataset
-
-| Model | Accuracy |
-|---|---|
-| U-Net (fine-tuned, Phase 2) | ~92% |
-| YOLOv8-Nano (Segmentation) | Evaluated (see notebook) |
+> SAM zero-shot struggles with the spectral properties of satellite imagery and large open-ground regions. The trained U-Net outperforms by a significant margin on this domain.
 
 ---
 
 ## Environment & Setup
 
-### Compute
-- **Training:** Kaggle (2× NVIDIA T4 GPUs, DataParallel)
-- **Development:** Google Colab (T4 GPU) / Local Windows + VS Code
-
-### Installation
+### Requirements
 
 ```bash
-pip install -r requirements.txt
-```
-
-Key dependencies:
-```
-torch
-torchvision
-rasterio
-geopandas
-shapely
-fiona
-albumentations
-segment-anything
-ultralytics
-opencv-python
-scikit-learn
-matplotlib
-seaborn
-tqdm
+pip install torch torchvision rasterio geopandas shapely fiona \
+            albumentations segment-anything opencv-python \
+            matplotlib tqdm
 ```
 
 ### SAM Checkpoint
-Download the SAM ViT-B checkpoint (~375 MB) before running SAM cells:
 
 ```python
-import urllib.request
+import urllib.request, os
+os.makedirs('checkpoints', exist_ok=True)
 urllib.request.urlretrieve(
     'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth',
     'checkpoints/sam_vit_b_01ec64.pth'
 )
 ```
 
----
+### Kaggle Dataset
 
-## Notebooks
-
-### `oiu-sd.ipynb` — Main Full Pipeline
-The primary research notebook covering both phases end-to-end:
-
-1. SpaceNet-1 file pairing (8-band + GeoJSON by image ID)
-2. Binary mask generation from GeoJSON annotations
-3. Dataset and DataLoader setup (8-band, 400×400 px)
-4. SAM ViT-B channel adapter definition
-5. Loss functions (`DiceLoss`, `BCEDiceLoss`)
-6. U-Net (8-channel) training + evaluation on SpaceNet-1 test set
-7. SAM fine-tuning on SpaceNet-1 (frozen encoder, trainable decoder)
-8. Phase 2: Svamitva drone DataLoader setup
-9. Network surgery (8→3 channel adapter replacement)
-10. Zero-shot transfer test
-11. Phase 2 fine-tuning (U-Net + SAM)
-12. YOLOv8-Nano dataset preparation and training
-13. Comparative evaluation with confusion matrices
-
-### `spacenet1-unet-sam-3band-evaluation.ipynb` — 3-Band Evaluation
-A focused evaluation notebook on Kaggle using pre-generated 3-band RGB masks:
-
-1. GPU check and dependency installation
-2. Config and dynamic path discovery
-3. Dataset exploration and visualisation
-4. 3-band U-Net training (DataParallel, 2× T4)
-5. Full evaluation: loss/IoU curves, confusion matrix, per-image IoU distribution
-6. SAM zero-shot inference with custom building filter (area, aspect ratio)
-7. U-Net vs SAM side-by-side comparison
+Add the following dataset to your Kaggle notebook:
+```
+sayanmondal772/spacenet1-3band-masks
+```
 
 ---
 
-## Contributors
+## Notebook Walkthrough
 
-| GitHub | Name |
+| Step | Description |
 |---|---|
-| [@sm7313617-create](https://github.com/sm7313617-create) | Sayan Mondal |
-| [@IshanGain](https://github.com/IshanGain) | Ishan Gain |
-| [@Arka007-hustle](https://github.com/Arka007-hustle) | Pranjal Basu |
+| 1 | GPU check (`nvidia-smi`, `torch.cuda.device_count()`) |
+| 2 | Install dependencies (`rasterio`, `geopandas`, `segment-anything`, etc.) |
+| 3 | Config & dynamic path discovery (handles split zip folders) |
+| 4 | Dataset exploration — resolution, CRS, band stats, sample visualisation |
+| 5 | Path helpers — `geojson_for_image()`, `mask_path_for_image()` |
+| 6 | Quick sanity visualisation (RGB tile + binary mask overlay) |
+| 7 | `SpaceNetDataset`, train/val/test split, Albumentations transforms |
+| 8 | U-Net architecture (3-band, `DoubleConv`, encoder-decoder with skips) |
+| 9 | `BCEDiceLoss`, Adam optimizer setup |
+| 10 | Training loop with auto-resume checkpoint logic |
+| 11a | Loss & IoU curves |
+| 11b | Full val-set evaluation (IoU, Precision, Recall, F1) |
+| 11c | Confusion matrix |
+| 11d | Per-image IoU distribution histogram |
+| 11e | Prediction grid (9 samples: RGB / GT mask / Predicted mask) |
+| 11f | Polygon contour overlay (OpenCV) |
+| 12 | SAM download, `SamAutomaticMaskGenerator` setup, zero-shot inference |
+| 12+ | U-Net vs SAM bar chart & IoU distribution comparison |
 
 ---
 
-## References
+## Output Files
 
-- [SpaceNet Buildings Dataset v1](https://spacenet.ai/spacenet-buildings-dataset-v1/)
-- [Segment Anything Model (SAM)](https://github.com/facebookresearch/segment-anything) — Kirillov et al., 2023
-- [YOLOv8](https://github.com/ultralytics/ultralytics) — Ultralytics
-- [Svamitva Drone Aerial Images](https://www.kaggle.com/datasets/utkarshsaxenadn/svamitva-drone-aerial-images) — Kaggle
+| File | Description |
+|---|---|
+| `fig1_sample_tile.png` | Sample RGB tile visualisation |
+| `fig2_mask_verify.png` | Mask sanity check |
+| `fig6_loss_curves.png` | Train/val loss + IoU curves |
+| `confusion_matrix.png` | U-Net pixel-level confusion matrix |
+| `iou_distribution.png` | Per-image IoU histogram (U-Net) |
+| `fig7_predictions.png` | 9-sample prediction grid |
+| `fig8_polygons.png` | Polygon contour overlay |
+| `fig_unet_vs_sam.png` | U-Net vs SAM metric comparison bar chart |
+| `fig11_sam_iou_distribution.png` | Per-image IoU histogram (SAM) |
+| `unet_best.pth` | Best U-Net checkpoint (by val loss) |
+| `unet_last.pth` | Last epoch checkpoint (for resumption) |
