@@ -1,4 +1,6 @@
-# 🛰️ Overhead (Satellite/Drone) Image Analysis
+# 🛰️ Overhead Satellite Drone Image Analysis
+
+![Typing Animation](https://readme-typing-svg.herokuapp.com?color=00FF00&size=24&center=true&vCenter=true&width=800&lines=Building+Footprint+Extraction;U-Net+vs+SAM;Satellite+Image+Segmentation;Deep+Learning+Project)
 
 <p align="center">
   <img src="https://img.shields.io/badge/PYTHON-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white" height="35"/>
