@@ -423,7 +423,7 @@ urllib.request.urlretrieve(
 
 ## Notebook Walkthroughs
 
-### `spacenet1-unet-sam-3band-evaluation.ipynb`
+### `spacenet1-unet-sam-3band-evaluation.ipynb` — Phase 1 (SpaceNet-1, 3-band)
 
 | Step | Description |
 |---|---|
