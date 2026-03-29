@@ -1,6 +1,6 @@
 <h1 align="center"><code>🛰️ Overhead (Satellite/Drone) Image Analysis</code></h1>
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?font=VT323&weight=400&color=00FF00&size=32&center=true&vCenter=true&width=900&pause=1000&lines=Building+Footprint+Extraction+from+Satellite+%26+Drone+Imagery;Trained+on+SpaceNet-1+%7C+6%2C940+WorldView-3+Tiles;Custom+8-band+U-Net+%7C+SAM+ViT-B+%7C+YOLOv8-Nano;Mean+IoU+%3D+0.631+%7C+Phase+2+Accuracy+%3D+92%25;Transfer+Learning%3A+Rio+de+Janeiro+%E2%86%92+Rural+India;Network+Surgery%3A+8-Band+Satellite+%E2%86%92+3-Band+Drone;Powered+by+Kaggle+2%C3%97+T4+GPUs+%7C+DataParallel+Training;Deep+Learning+%7C+Computer+Vision+%7C+Remote+Sensing" alt="Typing Animation" />
+  <img src="https://readme-typing-svg.herokuapp.com?font=VT323&weight=400&color=00FF00&size=32&center=true&vCenter=true&width=900&pause=1000&lines=Internship+Project+%7C+IDEAS+%40+Indian+Statistical+Institute%2C+Kolkata;Building+Footprint+Extraction+from+Satellite+%26+Drone+Imagery;Trained+on+SpaceNet-1+%7C+6%2C940+WorldView-3+Tiles;Custom+8-band+U-Net+%7C+SAM+ViT-B+%7C+YOLOv8-Nano;Mean+IoU+%3D+0.631+%7C+Phase+2+Accuracy+%3D+92%25;Transfer+Learning%3A+Rio+de+Janeiro+%E2%86%92+Rural+India;Network+Surgery%3A+8-Band+Satellite+%E2%86%92+3-Band+Drone;Powered+by+Kaggle+2%C3%97+T4+GPUs+%7C+DataParallel+Training;Deep+Learning+%7C+Computer+Vision+%7C+Remote+Sensing" alt="Typing Animation" />
 </p>
 
 <p align="center">
