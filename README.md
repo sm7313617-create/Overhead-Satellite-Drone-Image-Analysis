@@ -235,22 +235,52 @@ Pre-trained 8-band U-Net + SAM (Phase 1 checkpoints)
 
 ## Results
 
-### Phase 1 — SpaceNet-1 · 3-band Evaluation
+### Phase 1 — SpaceNet-1 · 8-band (`oiu-sd.ipynb`)
+
+Evaluated on the SpaceNet-1 test set using 8-band WorldView-3 multispectral imagery.
+
+| Model | Mean IoU | F1 / Dice | Precision | Recall |
+|---|---|---|---|---|
+| SAM ViT-B (zero-shot) | 0.0658 | 0.1235 | 0.0661 | 0.9394 |
+| **U-Net (8-band, trained)** | **0.6126** | **0.7029** | **0.8358** | **0.6805** |
+| SAM ViT-B (fine-tuned) | 0.4355 | 0.4755 | 0.8375 | 0.4560 |
+
+> SAM zero-shot achieves near-perfect recall but extremely low precision — it over-segments everything. The trained U-Net is the strongest performer on Phase 1. Fine-tuned SAM improves substantially over zero-shot but still trails U-Net on IoU and F1.
+
+---
+
+### Phase 1 — SpaceNet-1 · 3-band (`spacenet1-unet-sam-3band-evaluation.ipynb`)
+
+Evaluated on the SpaceNet-1 validation set using 3-band RGB imagery with pre-generated masks.
 
 | Model | Mean IoU | F1 Score | Precision | Recall |
 |---|---|---|---|---|
-| **U-Net (3-band, trained)** | **0.631** | **0.724** | 0.601 | 0.910 |
 | SAM ViT-B (zero-shot) | ~0.10 | — | — | — |
+| **U-Net (3-band, trained)** | **0.631** | **0.724** | 0.601 | 0.910 |
 
-### Phase 2 — Svamitva Drone Dataset
+---
 
-| Model | Pixel Accuracy | Notes |
-|---|---|---|
-| **U-Net (fine-tuned, Phase 2)** | **~92%** | + OpenCV polygon post-processing |
-| SAM ViT-B (fine-tuned, Phase 2) | — | Micro-batched fine-tuning |
-| YOLOv8-Nano | — | YOLO polygon segmentation |
+### Phase 2 — Svamitva Drone Dataset (`oiu-sd.ipynb`)
 
-> Full confusion matrices and per-metric breakdowns are generated inline in the notebooks. Fill in SAM and YOLO Phase 2 values from your run outputs.
+Evaluated pixel-level on Indian drone imagery after cross-domain transfer learning. All models adapted via network surgery (8-band → 3-band) and fine-tuned on the Svamitva dataset.
+
+| Model | Overall Accuracy | Building Precision | Building Recall | Notes |
+|---|---|---|---|---|
+| **U-Net (fine-tuned)** | **0.92** | **0.91** | **0.89** | Best overall performance |
+| U-Net + OpenCV Pipeline | 0.91 | 0.89 | 0.88 | Polygon regularisation post-processing |
+| SAM ViT-B (fine-tuned) | 0.84 | 0.78 | 0.85 | Micro-batched fine-tuning |
+| YOLOv8-Nano | 0.86 | 0.86 | 0.76 | Highest building precision after U-Net |
+
+#### Phase 2 Confusion Matrix Summary (pixel-level)
+
+| Model | TN | FP | FN | TP |
+|---|---|---|---|---|
+| U-Net (fine-tuned) | 43,616,038 | 2,653,567 | 3,415,642 | 27,114,753 |
+| U-Net + OpenCV | 43,022,354 | 3,369,522 | 3,701,038 | 26,707,086 |
+| SAM ViT-B (fine-tuned) | 38,894,930 | 7,456,257 | 4,623,793 | 25,825,020 |
+| YOLOv8-Nano | 42,690,745 | 3,630,954 | 7,291,282 | 23,187,019 |
+
+> Full loss curves, per-image IoU distributions, and visual prediction grids are generated inline in the notebooks.
 
 ---
 
