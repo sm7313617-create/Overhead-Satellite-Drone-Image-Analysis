@@ -527,7 +527,6 @@ urllib.request.urlretrieve(
 |---|---|
 | [@IshanGain](https://github.com/IshanGain) | Ishan Gain |
 | [@sm7313617-create](https://github.com/sm7313617-create) | Sayan Mondal |
-| [@Arka007-hustle](https://github.com/Arka007-hustle) | Pranjal Basu |
 
 ---
 
